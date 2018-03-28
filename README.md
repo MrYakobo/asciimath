@@ -1,1 +1,1 @@
-A simple Asciimath live environment.
+Simple asciimath web client with (partial) markdown support
