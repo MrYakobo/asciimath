@@ -1,0 +1,15 @@
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_HTMLorMML"></script>
+<script>
+    function render(text){
+        const math = MathJax.Hub.getAllJax("target")[0]
+        MathJax.Hub.Queue(["Text",math,text])
+    }
+    let old = ''
+    setInterval(()=>{
+        const t = document.getElementById("text").value
+        if(t !== '' && t !== old) render(t)
+        old = t
+    }, 1000)
+</script>
+<textarea id="text"></textarea>
+<div id="target">`sum_(i=0)^oo`</div>

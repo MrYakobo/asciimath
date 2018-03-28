@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_HTMLorMML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.8.6/showdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<link href="https://fonts.googleapis.com/css?family=Fira+Mono|Fira+Sans" rel="stylesheet">
+<link id="style" href="css/air.css" rel="stylesheet">
+<style>
+    .full{
+        display: flex;
+        flex: 1;
+        margin: 10px;
+        height: 90%;
+        /*border-left: 1px solid #000*/
+    }
+    body,html{
+        margin: 0px;
+        height: 100%;
+        width: 100%;
+        font-family: 'Fira Sans', sans-serif;
+        max-width: inherit;
+        text-align: left;
+        font-size: 20px
+    }
+
+    div.flex{
+        display: flex;
+        height: 90%;
+        width: 100%
+    }
+    textarea{
+        font-family: 'Fira Mono', monospace;
+        font-size: 1.2em
+    }
+    @media print{
+        #text,.menu{
+            display: none
+        }
+    }
+    @page{
+        margin: 0
+    }
+</style>
+<script>
+    const converter = new showdown.Converter({
+        literalMidWordUnderscores: true,
+        literalMidWordAsterisks: true,
+        simpleLineBreaks: true
+    })
+
+    function sanitize(md){
+        // const ss = $($.parseHTML(head))
+        // ss('head').append(`<title>${title}</title>`)
+        // const head = ss.html()
+
+        // const s = $($.parseHTML(md))
+        md = `<div>${md}</div>`
+        const nodes = $('p:contains("`")', md).contents().toArray() //unpack <p>`foo`bar</p> to `foo`<p>bar</p>.
+        const unpack = nodes.filter(t=> t.data != null && t.data.indexOf('`')>-1)
+        unpack.forEach(t=> {
+            const math = /\\`(.+?)\\`/.exec(t.data)
+            $(t, md).text(t.data.replace(math, '')) //remove math from element
+            $(t.parentNode, md).before(math) //add math as a seperate text node before <p>.
+        })
+        $('em', md).toArray().map(t=>{
+            $(t).before($(t).text()) //unpack <em>foo</em> to foo
+            $(t).remove()
+        })
+        return md
+    }
+    function render(){
+        // const math = MathJax.Hub.getAllJax("target")[0]
+        // MathJax.Hub.Queue(["Text",math,text])
+        MathJax.Hub.Queue(["Typeset",MathJax.Hub, 'target'])
+    }
+    function compile(md){
+        const html = converter.makeHtml(md.replace(/`(.+?)`/g,'\\`$1\\`'))
+        document.getElementById("target").innerHTML = sanitize(html)
+    }
+    function btnClick(){
+        const t = document.getElementById("text").value
+        compile(t)
+        render()
+    }
+    let old = ''
+    let oldMath = ''
+
+    function compileIfNew(){
+        const t = document.getElementById("text").value
+        if(t !== '' && t !== old) {
+            // const regex = /`(.+?)`/g
+            // let newMath = ''
+            // while(reg = regex.exec(t)){
+            //     newMath+=reg[1]
+            // }
+            // if(newMath !== oldMath)
+            // oldMath = newMath
+            compile(t)
+            render()
+        }
+        old = t
+    }
+
+    let autoCompile = false
+    let interval
+    // let interval = setInterval(()=>{ compileIfNew() }, 1000)
+
+    function toggleAuto(){
+        autoCompile = !autoCompile
+
+        if(autoCompile)
+            interval = setInterval(()=>{ compileIfNew() }, 1000) 
+        else
+            clearInterval(interval)
+    }
+
+    function updateCSS(){
+        document.getElementById('style').href = document.getElementById("select").value
+    }
+    function checkEnter(e){
+        if(e.keyCode == 13){
+            compileIfNew()
+        }
+    }
+</script>
+</head>
+<body>
+    <div class="flex">
+<textarea id="text" class="full" onkeydown="checkEnter(event)">
+# Yo boi
+U should try editing this dank equation `y' = oint_0^A A^k`
+See [asciimath.org](http://asciimath.org) for documentation on typing math
+And [commonmark.org](http://commonmark.org/help/) for help on formatting yo documentz
+I've disabled using asterisks (*) and underscores (_) for italics/bolds coz it confuses the parser
+
+Use the menu below to change theme and turning on auto compilation.
+
+To download your document, press Ctrl+P and save to pdf. Oh and if you want HTML just copy the HTML by inspecting the page.
+</textarea>
+    <div id="target" class="full"></div>
+    </div>
+    <div class="menu">
+    <label><input type="checkbox" onchange="toggleAuto()"> Auto compile?</label>
+    <button onclick="btnClick()">Compile</button>
+    Select a theme:
+    <select id="select" onchange="updateCSS()">
+        <option value="css/air.css">Air</option>
+        <option value="css/modest.css">Modest</option>
+        <option value="css/retro.css">Retro</option>
+        <option value="css/splendor.css">Splendor</option>
+    </select>
+    </div>
+</body>
+<script>
+$(window).on('load', function() {
+  compileIfNew()  
+});
+</script>
+</html>
