@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_HTMLorMML"></script>
+<script id="am" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_HTMLorMML"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.8.6/showdown.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <link href="https://fonts.googleapis.com/css?family=Fira+Mono|Fira+Sans" rel="stylesheet">
@@ -75,6 +75,9 @@
         MathJax.Hub.Queue(["Typeset",MathJax.Hub, 'target'])
     }
     function compile(md){
+	const b64 = btoa(md)
+	location.hash = b64
+	document.getElementById('link').href = location.host + location.pathname + '#' + b64
         const html = converter.makeHtml(md.replace(/`(.+?)`/g,'\\`$1\\`'))
         document.getElementById("target").innerHTML = sanitize(html)
     }
@@ -102,9 +105,9 @@
         old = t
     }
 
-    let autoCompile = false
-    let interval
-    // let interval = setInterval(()=>{ compileIfNew() }, 1000)
+    let autoCompile = true
+    //let interval
+    let interval = setInterval(()=>{ compileIfNew() }, 1000)
 
     function toggleAuto(){
         autoCompile = !autoCompile
@@ -141,7 +144,7 @@ To download your document, press Ctrl+P and save to pdf. Oh and if you want HTML
     <div id="target" class="full"></div>
     </div>
     <div class="menu">
-    <label><input type="checkbox" onchange="toggleAuto()"> Auto compile?</label>
+    <label><input type="checkbox" checked onchange="toggleAuto()"> Auto compile?</label>
     <button onclick="btnClick()">Compile</button>
     Select a theme:
     <select id="select" onchange="updateCSS()">
@@ -150,11 +153,27 @@ To download your document, press Ctrl+P and save to pdf. Oh and if you want HTML
         <option value="css/retro.css">Retro</option>
         <option value="css/splendor.css">Splendor</option>
     </select>
+    <!--<button onclick="downloadInnerHtml('')">Download your masterpiece as rendered HTML</button>-->
+    <a id="link" href="">Permalink to this document</a>
     </div>
 </body>
 <script>
 $(window).on('load', function() {
-  compileIfNew()  
+	if(location.hash){
+		document.getElementById('text').value = atob(location.hash.split('#')[1])
+	}
+	compileIfNew()  
 });
+
+function downloadInnerHtml() {
+    const filename =  'math.html'
+    const elHtml = document.getElementById('target').innerHTML + document.getElementById('am').outerHTML
+    const link = document.createElement('a');
+    const mimeType = 'text/html';
+
+    link.setAttribute('download', filename);
+    link.setAttribute('href', 'data:' + mimeType  +  ';charset=utf-8,' + encodeURIComponent(elHtml));
+    link.click();
+}
 </script>
 </html>
